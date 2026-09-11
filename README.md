@@ -2,59 +2,91 @@
   <img src="" alt="Logo" width="200" />
 </p>
 
-<h1 align="center">Project Template</h1>
+<h1 align="center">gitbare</h1>
 
 <p align="center">
-  <strong>Modern project foundation.</strong>
+  <strong>Bare Git repositories, without the bare experience.</strong>
 </p>
 
 <p align="center">
-  <i>A clean, production-ready template to kickstart new projects.</i>
+  <i>A single portable .py, powered by Python's standard library only.</i>
 </p>
 
 <br>
 
-# How to use this template
+# What it does
+
+`gitbare` wraps `git` so you can work with bare repositories as easily as with
+normal ones. Link a working directory to a bare repository once, then run
+plain `git` commands through `gitbare` — the matching `--git-dir` and
+`--work-tree` options are injected for you.
 
 ```bash
-PROJECT_NAME="my-project"
-# Find your technologies at https://www.toptal.com/developers/gitignore
-TECHNOLOGIES="python,docker,go"
-
-# Clone the repository (SSH)
-git clone git@github.com:lebriton/project-template.git $PROJECT_NAME
-
-# OR clone the repository (HTTPS)
-git clone https://github.com/lebriton/project-template.git $PROJECT_NAME
-
-# Enter the project directory
-cd $PROJECT_NAME
-
-# Rename the devpod to match the project name
-sed -i "s/project-template/$PROJECT_NAME/g" .devcontainer/devcontainer.json Justfile
-
-# Remove the existing git history
-rm -rf .git
-
-# Initialize a new git repository
-git init -b main
-
-# Install skills
-# Find more at https://www.skills.sh/ and https://github.com/lebriton/skills
-npx skills add https://github.com/lebriton/skills --skill bash-scripting -y
-npx skills add https://github.com/github/awesome-copilot --skill conventional-commit -y
-npx skills add https://github.com/casey/just --skill just -y
-npx skills add https://github.com/lebriton/skills --skill justfile-conventions -y
-
-# Generate the .gitignore file
-wget https://www.toptal.com/developers/gitignore/api/$TECHNOLOGIES -O .gitignore
+gitbare link --init ~/bare/project.git   # once, from your working directory
+gitbare status                           # git --git-dir=... --work-tree=...
+gitbare add .
+gitbare commit -m "Deployable state"
+gitbare push origin main
 ```
 
-# Documentation
+# Why this project
 
-- [Foo](docs/foo.md)
-- [Bar](docs/bar.md)
-- [Baz](docs/baz.md)
+It started with a specific problem: PHP projects served from `/var/www`. A
+normal clone keeps a `.git` directory next to the files, and when those files
+are served over HTTP a misconfigured or compromised webserver can expose it —
+leaking the entire history: sources, credentials, everything. Apache/nginx
+rules help, but a second line of defense is better.
+
+A bare repository holds no working tree, so there is nothing to serve or
+browse from the web root. Backing a project with a bare repo means even the
+worst misconfiguration has no `.git` directory to stumble into.
+
+`gitbare` was vibe-coded quickly to make that setup painless — treat it as a
+handy convenience tool, not a hardened piece of software.
+
+# Configuration
+
+Mappings live in `~/.gitbare`:
+
+```ini
+[bare]
+/var/www/project = /home/user/bare/project.git
+/home/user/dotfiles = /home/user/dotfiles.git
+```
+
+`gitbare` looks up the current directory — walking up through parent
+directories if needed — and runs git against the mapped bare repository. If no
+mapping matches, it errors out; it never falls back to plain `git`.
+
+# Commands
+
+- `link <bare> [--init]` — map the current directory to the bare repository;
+  `--init` creates it when missing.
+- `unlink [dir]` — remove the mapping for a directory (default: current).
+- `-v`, `--verbose` — print the resolved mapping and the git command being run.
+- Anything else is forwarded to `git` unchanged.
+
+# Installation
+
+Download and install as a single command.
+
+**wget:**
+
+```bash
+mkdir -p ~/.local/bin
+wget -qO ~/.local/bin/gitbare https://raw.githubusercontent.com/lebriton/gitbare/main/src/gitbare.py
+chmod +x ~/.local/bin/gitbare
+```
+
+**curl:**
+
+```bash
+mkdir -p ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/lebriton/gitbare/main/src/gitbare.py -o ~/.local/bin/gitbare
+chmod +x ~/.local/bin/gitbare
+```
+
+Make sure `~/.local/bin` is in your `PATH`.
 
 <br>
 
