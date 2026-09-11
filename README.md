@@ -88,6 +88,10 @@ chmod +x ~/.local/bin/gitbare
 
 Make sure `~/.local/bin` is in your `PATH`.
 
+# License
+
+[MIT](LICENSE).
+
 <br>
 
 <p align="center">
