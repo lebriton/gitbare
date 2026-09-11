@@ -51,16 +51,39 @@ class ConfigTests(GitbareTestCase):
 
 
 class LinkTests(GitbareTestCase):
-    def test_link_writes_mapping(self):
+    def test_link_creates_bare_repo(self):
         self.chdir(self.workdir)
-        self.assertEqual(cli.cmd_link([self.bare_dir]), 0)
+        target = os.path.join(self.tmpdir, "repos", "nested", "created.git")
+        self.assertEqual(cli.cmd_link(["--init", target]), 0)
+        result = subprocess.run(
+            ["git", "--git-dir=" + target, "rev-parse", "--is-bare-repository"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.stdout.strip(), "true")
         mapping = cli.load_config()[cli.BARE_SECTION]
-        self.assertEqual(mapping[os.path.realpath(self.workdir)], self.bare_dir)
+        self.assertEqual(mapping[os.path.realpath(self.workdir)], target)
 
-    def test_link_resolves_relative_bare_path(self):
+    def test_link_fails_on_invalid_directory(self):
         self.chdir(self.workdir)
-        relative = os.path.relpath(self.bare_dir, self.workdir)
-        self.assertEqual(cli.cmd_link([relative]), 0)
+        invalid = os.path.join(self.tmpdir, "invalid")
+        os.makedirs(invalid)
+        with open(os.path.join(invalid, "file.txt"), "w", encoding="utf-8") as handle:
+            handle.write("not a repo")
+        self.assertEqual(cli.cmd_link(["--init", invalid]), 1)
+        self.assertNotIn(cli.BARE_SECTION, cli.load_config())
+
+    def test_link_init_keeps_existing_repo(self):
+        self.chdir(self.workdir)
+        self.assertEqual(cli.cmd_link(["--init", self.bare_dir]), 0)
+        result = subprocess.run(
+            ["git", "--git-dir=" + self.bare_dir, "rev-parse", "--is-bare-repository"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.stdout.strip(), "true")
         mapping = cli.load_config()[cli.BARE_SECTION]
         self.assertEqual(mapping[os.path.realpath(self.workdir)], self.bare_dir)
 
@@ -72,6 +95,19 @@ class LinkTests(GitbareTestCase):
         cli.cmd_link([other_bare])
         mapping = cli.load_config()[cli.BARE_SECTION]
         self.assertEqual(mapping[os.path.realpath(self.workdir)], other_bare)
+
+    def test_link_resolves_relative_bare_path(self):
+        self.chdir(self.workdir)
+        relative = os.path.relpath(self.bare_dir, self.workdir)
+        self.assertEqual(cli.cmd_link([relative]), 0)
+        mapping = cli.load_config()[cli.BARE_SECTION]
+        self.assertEqual(mapping[os.path.realpath(self.workdir)], self.bare_dir)
+
+    def test_link_writes_mapping(self):
+        self.chdir(self.workdir)
+        self.assertEqual(cli.cmd_link([self.bare_dir]), 0)
+        mapping = cli.load_config()[cli.BARE_SECTION]
+        self.assertEqual(mapping[os.path.realpath(self.workdir)], self.bare_dir)
 
 
 class UnlinkTests(GitbareTestCase):

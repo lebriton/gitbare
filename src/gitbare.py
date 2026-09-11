@@ -19,14 +19,15 @@ DESCRIPTION = (
 
 EPILOG = """\
 Subcommands:
-  link   <bare>    Map the current directory to a bare repository.
+  link   <bare>    Map the current directory to a bare repository
+                   (use --init to create the bare repository first).
   unlink [dir]     Remove the mapping for a directory (default: current).
 
 Any other command is forwarded to git with the matching --git-dir and
 --work-tree options injected automatically.
 
 Examples:
-  gitbare link ~/repos/project.git
+  gitbare link --init ~/repos/project.git
   gitbare status
   gitbare add . && gitbare commit -m "update"
 """
@@ -58,9 +59,28 @@ def cmd_link(argv: list[str]) -> int:
         description="Link the current directory to a bare repository.",
     )
     parser.add_argument("bare", help="Path to the bare git repository.")
+    parser.add_argument(
+        "--init",
+        action="store_true",
+        help="Create the bare repository if it does not exist.",
+    )
     args = parser.parse_args(argv)
 
     bare = os.path.abspath(os.path.expanduser(args.bare))
+    if is_bare_repo(bare):
+        logger.info("%s is already a bare git repository", bare)
+    elif args.init:
+        if os.path.exists(bare) and (not os.path.isdir(bare) or os.listdir(bare)):
+            logger.error("%s exists but is not an empty directory", bare)
+            return 1
+        if create_bare_repo(bare) != 0:
+            return 1
+        logger.info("Created bare git repository %s", bare)
+    else:
+        logger.warning(
+            "No bare git repository found at %s (use --init to create it)", bare
+        )
+
     workdir = os.path.realpath(os.getcwd())
 
     cfg = load_config()
@@ -114,6 +134,20 @@ def config_path() -> str:
     return os.path.expanduser(os.environ.get("GITBARE_CONFIG", CONFIG_DEFAULT))
 
 
+def create_bare_repo(bare: str) -> int:
+    parent = os.path.dirname(bare)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    cmd = ["git", "init", "--bare", bare]
+    logger.debug("Running: %s", " ".join(shlex.quote(part) for part in cmd))
+    try:
+        result = subprocess.run(cmd, check=False)
+    except FileNotFoundError:
+        logger.error("git executable not found in PATH")
+        return 1
+    return result.returncode
+
+
 def find_mapping(cfg: configparser.ConfigParser) -> str | None:
     if BARE_SECTION not in cfg:
         return None
@@ -127,6 +161,16 @@ def find_mapping(cfg: configparser.ConfigParser) -> str | None:
             break
         directory = parent
     return None
+
+
+def is_bare_repo(bare: str) -> bool:
+    cmd = ["git", "--git-dir=" + bare, "rev-parse", "--is-bare-repository"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        logger.error("git executable not found in PATH")
+        return False
+    return result.returncode == 0 and result.stdout.strip() == "true"
 
 
 def load_config() -> configparser.ConfigParser:
