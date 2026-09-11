@@ -16,6 +16,7 @@ git lfs install
 # Install pip packages
 # NOTE: Install separately to avoid pip dependency resolution backtracking
 pip install --break-system-packages pre-commit
+pip install --break-system-packages ruff
 
 # Configure project
 just setup
