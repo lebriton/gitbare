@@ -224,15 +224,27 @@ class MainTests(GitbareTestCase):
             self.assertEqual(cli.main([]), 0)
         self.assertIn("gitbare", buffer.getvalue())
 
-    def test_main_verbose_git_passthrough(self):
-        self.chdir(self.workdir)
-        cli.main(["link", self.bare_dir])
-        self.assertEqual(cli.main(["-v", "status"]), 0)
+    def test_main_short_version_flag(self):
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            self.assertEqual(cli.main(["-V"]), 0)
+        self.assertEqual(buffer.getvalue().strip(), "gitbare 1.0.0")
 
     def test_main_unknown_command_uses_git(self):
         self.chdir(self.workdir)
         cli.main(["link", self.bare_dir])
         self.assertEqual(cli.main(["not-a-git-command"]), 1)
+
+    def test_main_verbose_git_passthrough(self):
+        self.chdir(self.workdir)
+        cli.main(["link", self.bare_dir])
+        self.assertEqual(cli.main(["-v", "status"]), 0)
+
+    def test_main_version_flag(self):
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            self.assertEqual(cli.main(["--version"]), 0)
+        self.assertEqual(buffer.getvalue().strip(), "gitbare 1.0.0")
 
 
 if __name__ == "__main__":

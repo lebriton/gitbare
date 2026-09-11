@@ -34,6 +34,7 @@ Examples:
 
 CONFIG_DEFAULT = os.path.expanduser("~/.gitbare")
 BARE_SECTION = "bare"
+VERSION = "1.0.0"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -49,6 +50,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--verbose",
         action="store_true",
         help="Print the resolved mapping and the git command being run.",
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="store_true",
+        help="Print the gitbare version and exit.",
     )
     return parser
 
@@ -186,6 +193,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args, git_args = parser.parse_known_args(sys.argv[1:] if argv is None else argv)
     setup(args.verbose)
+
+    if args.version:
+        print(f"gitbare {VERSION}")
+        return 0
 
     if not git_args or git_args[0] in ("-h", "--help"):
         parser.print_help()
