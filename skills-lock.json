@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "just": {
+      "source": "casey/just",
+      "sourceType": "github",
+      "skillPath": "skills/just/SKILL.md",
+      "computedHash": "da9eb61caf8468d813997618f923370cfe77ff4ebd6bb19b47bd4e91c19437d2"
+    },
+    "justfile-conventions": {
+      "source": "lebriton/skills",
+      "sourceType": "github",
+      "skillPath": "skills/justfile-conventions/SKILL.md",
+      "computedHash": "d951057ab56c6e2772be364c7b1f30b879652654979215da73d52c43787759b8"
+    },
+    "python-cli": {
+      "source": "lebriton/skills",
+      "sourceType": "github",
+      "skillPath": "skills/python-cli/SKILL.md",
+      "computedHash": "47281ee80d3e2eae052e8d54fb3040099c717622d006bf079efc66c2a0d55b1f"
+    }
+  }
+}
