@@ -14,3 +14,6 @@ setup:
     bin/check-requirements
     pre-commit install
     pre-commit install-hooks
+
+test:
+    PYTHONPATH=src python3 -m unittest discover -s tests -v

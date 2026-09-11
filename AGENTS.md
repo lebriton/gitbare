@@ -10,6 +10,10 @@
 
 - All comments in code and all commit messages must be written in English only. French is not allowed.
 
+## Code style
+
+- Functions must be sorted alphabetically within a file.
+
 ## Documentation
 
 - Documentation must be stored in `docs/*.md` files.
